@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hydration Tracker</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2D9CDB;
+            --secondary: #56CCF2;
+            --accent: #F2C94C;
+            --light: #E0F7FA;
+            --dark: #2D3436;
+            --success: #27AE60;
+            --warning: #E67E22;
+            --danger: #EB5757;
+            --background: #ffffff;
+            --card-bg: #f8f9fa;
+            --text: #333333;
+            --shadow: rgba(149, 157, 165, 0.2);
+        }
+
+        .dark-theme {
+            --background: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text: #f0f0f0;
+            --shadow: rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .logo i {
+            font-size: 32px;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text);
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px var(--shadow);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-large {
+            padding: 15px 30px;
+            font-size: 18px;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 20px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            transition: width 0.5s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text);
+            opacity: 0.8;
+        }
+
+        .insight-card {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            background-color: white;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 250px;
+            width: 100%;
+        }
+
+        .reminder-popup {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            z-index: 1000;
+            animation: popIn 0.5s ease-out;
+            border-left: 5px solid var(--accent);
+        }
+
+        @keyframes popIn {
+            0% { transform: translateX(100px); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+
+        .badge-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .badge-success {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .badge-warning {
+            background-color: var(--warning);
+            color: white;
+        }
+
+        .auth-container {
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 30px;
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px var(--shadow);
+        }
+
+        .auth-title {
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--primary);
+        }
+
+        .user-list {
+            margin-top: 20px;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+
+        .user-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+
+        .user-item:hover {
+            background-color: #f5f5f5;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .streak-count {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--accent);
+            margin-left: 10px;
+        }
+
+        .leaderboard {
+            margin-top: 20px;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .leaderboard-rank {
+            font-weight: bold;
+            margin-right: 10px;
+            color: var(--primary);
+        }
+
+        .glass-animation {
+            animation: drink 1s ease;
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .auth-tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+
+        .auth-tab.active {
+            border-bottom: 3px solid var(--primary);
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .error-message {
+            color: var(--danger);
+            margin-top: 5px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .reminder-popup {
+                left: 20px;
+                right: 20px;
+                bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // Main App Component
+        const App = () => {
+            const [currentView, setCurrentView] = React.useState('auth');
+            const [currentUser, setCurrentUser] = React.useState(null);
+            const [users, setUsers] = React.useState([]);
+            const [darkMode, setDarkMode] = React.useState(false);
+
+            React.useEffect(() => {
+                // Load users from localStorage
+                const storedUsers = JSON.parse(localStorage.getItem('hydrationUsers')) || [];
+                setUsers(storedUsers);
+                
+                // Check if we have a logged in user in session
+                const loggedInUser = localStorage.getItem('currentUser');
+                if (loggedInUser) {
+                    setCurrentUser(loggedInUser);
+                    setCurrentView('dashboard');
+                }
+                
+                // Check for dark mode preference
+                const isDarkMode = localStorage.getItem('darkMode') === 'true';
+                setDarkMode(isDarkMode);
+                if (isDarkMode) {
+                    document.body.classList.add('dark-theme');
+                }
+            }, []);
+
+            const toggleDarkMode = () => {
+                const newDarkMode = !darkMode;
+                setDarkMode(newDarkMode);
+                localStorage.setItem('darkMode', newDarkMode);
+                
+                if (newDarkMode) {
+                    document.body.classList.add('dark-theme');
+                } else {
+                    document.body.classList.remove('dark-theme');
+                }
+            };
+
+            const handleLogin = (username) => {
+                setCurrentUser(username);
+                localStorage.setItem('currentUser', username);
+                setCurrentView('dashboard');
+            };
+
+            const handleLogout = () => {
+                setCurrentUser(null);
+                localStorage.removeItem('currentUser');
+                setCurrentView('auth');
+            };
+
+            const handleRegister = (userData) => {
+                const newUsers = [...users, userData.username];
+                setUsers(newUsers);
+                localStorage.setItem('hydrationUsers', JSON.stringify(newUsers));
+                
+                // Store user data with password and email
+                localStorage.setItem(`user_${userData.username}`, JSON.stringify({
+                    email: userData.email,
+                    password: userData.password, // In a real app, this would be hashed
+                    weight: userData.weight,
+                    activityLevel: userData.activityLevel,
+                    dailyGoal: userData.dailyGoal,
+                    logs: []
+                }));
+                
+                // Auto login after registration
+                handleLogin(userData.username);
+            };
+
+            return (
+                <div className="container">
+                    <header>
+                        <div className="logo">
+                            <i className="fas fa-tint"></i>
+                            <span>Hydration Tracker</span>
+                        </div>
+                        <div>
+                            {currentUser && (
+                                <>
+                                    <span>Welcome, {currentUser}!</span>
+                                    <button onClick={handleLogout} style={{marginLeft: '15px'}} className="btn btn-primary">Logout</button>
+                                </>
+                            )}
+                            <button className="theme-toggle" onClick={toggleDarkMode}>
+                                {darkMode ? <i className="fas fa-sun"></i> : <i className="fas fa-moon"></i>}
+                            </button>
+                        </div>
+                    </header>
+
+                    {currentView === 'auth' && <AuthView users={users} onLogin={handleLogin} onRegister={handleRegister} />}
+                    {currentView === 'dashboard' && currentUser && <DashboardView username={currentUser} />}
+                </div>
+            );
+        };
+
+        // Authentication Component (Login + Register)
+        const AuthView = ({ users, onLogin, onRegister }) => {
+            const [activeTab, setActiveTab] = React.useState('login');
+            const [loginUsername, setLoginUsername] = React.useState('');
+            const [loginPassword, setLoginPassword] = React.useState('');
+            const [registerData, setRegisterData] = React.useState({
+                email: '',
+                username: '',
+                password: '',
+                weight: '',
+                activityLevel: 'moderate',
+                dailyGoal: 2000
+            });
+            const [errors, setErrors] = React.useState({});
+            const [showUserList, setShowUserList] = React.useState(false);
+
+            const validateLogin = () => {
+                const newErrors = {};
+                
+                if (!loginUsername) newErrors.loginUsername = 'Username is required';
+                if (!loginPassword) newErrors.loginPassword = 'Password is required';
+                
+                if (Object.keys(newErrors).length > 0) {
+                    setErrors(newErrors);
+                    return false;
+                }
+                
+                return true;
+            };
+
+            const validateRegister = () => {
+                const newErrors = {};
+                
+                if (!registerData.email) newErrors.email = 'Email is required';
+                else if (!/\S+@\S+\.\S+/.test(registerData.email)) newErrors.email = 'Email is invalid';
+                
+                if (!registerData.username) newErrors.username = 'Username is required';
+                else if (users.includes(registerData.username)) newErrors.username = 'Username already exists';
+                
+                if (!registerData.password) newErrors.password = 'Password is required';
+                else if (registerData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+                
+                if (!registerData.weight) newErrors.weight = 'Weight is required';
+                else if (isNaN(registerData.weight) || registerData.weight <= 0) newErrors.weight = 'Weight must be a positive number';
+                
+                if (Object.keys(newErrors).length > 0) {
+                    setErrors(newErrors);
+                    return false;
+                }
+                
+                return true;
+            };
+
+            const handleLoginSubmit = (e) => {
+                e.preventDefault();
+                if (!validateLogin()) return;
+                
+                // Check if user exists and password matches
+                const userData = JSON.parse(localStorage.getItem(`user_${loginUsername}`));
+                if (!userData) {
+                    setErrors({ login: 'User not found' });
+                    return;
+                }
+                
+                if (userData.password !== loginPassword) {
+                    setErrors({ login: 'Invalid password' });
+                    return;
+                }
+                
+                onLogin(loginUsername);
+            };
+
+            const handleRegisterSubmit = (e) => {
+                e.preventDefault();
+                if (!validateRegister()) return;
+                
+                onRegister({
+                    ...registerData,
+                    weight: parseInt(registerData.weight)
+                });
+            };
+
+            const selectUser = (username) => {
+                setLoginUsername(username);
+                setShowUserList(false);
+            };
+
+            return (
+                <div className="auth-container">
+                    <div className="auth-tabs">
+                        <div 
+                            className={`auth-tab ${activeTab === 'login' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('login')}
+                        >
+                            Login
+                        </div>
+                        <div 
+                            className={`auth-tab ${activeTab === 'register' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('register')}
+                        >
+                            Register
+                        </div>
+                    </div>
+
+                    {activeTab === 'login' && (
+                        <div>
+                            <h2 className="auth-title"><i className="fas fa-sign-in-alt"></i> Login to Your Account</h2>
+                            {errors.login && <div className="error-message">{errors.login}</div>}
+                            <form onSubmit={handleLoginSubmit}>
+                                <div className="form-group">
+                                    <label className="form-label">Username</label>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        value={loginUsername}
+                                        onChange={(e) => setLoginUsername(e.target.value)}
+                                        onFocus={() => setShowUserList(true)}
+                                        placeholder="Enter your username"
+                                    />
+                                    {errors.loginUsername && <div className="error-message">{errors.loginUsername}</div>}
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label className="form-label">Password</label>
+                                    <input
+                                        type="password"
+                                        className="form-input"
+                                        value={loginPassword}
+                                        onChange={(e) => setLoginPassword(e.target.value)}
+                                        placeholder="Enter your password"
+                                    />
+                                    {errors.loginPassword && <div className="error-message">{errors.loginPassword}</div>}
+                                </div>
+                                
+                                <button type="submit" className="btn btn-primary btn-large" style={{width: '100%'}}>
+                                    Login <i className="fas fa-arrow-right"></i>
+                                </button>
+                            </form>
+
+                            {users.length > 0 && (
+                                <div className="user-list">
+                                    <p>Select an existing user:</p>
+                                    {users.map(user => (
+                                        <div key={user} className="user-item" onClick={() => selectUser(user)}>
+                                            <span>{user}</span>
+                                            <i className="fas fa-user"></i>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {activeTab === 'register' && (
+                        <div>
+                            <h2 className="auth-title"><i className="fas fa-user-plus"></i> Create New Account</h2>
+                            <form onSubmit={handleRegisterSubmit}>
+                                <div className="form-group">
+                                    <label className="form-label">Email</label>
+                                    <input
+                                        type="email"
+                                        className="form-input"
+                                        value={registerData.email}
+                                        onChange={(e) => setRegisterData({...registerData, email: e.target.value})}
+                                        placeholder="Enter your email"
+                                    />
+                                    {errors.email && <div className="error-message">{errors.email}</div>}
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label className="form-label">Username</label>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        value={registerData.username}
+                                        onChange={(e) => setRegisterData({...registerData, username: e.target.value})}
+                                        placeholder="Choose a username"
+                                    />
+                                    {errors.username && <div className="error-message">{errors.username}</div>}
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label className="form-label">Password</label>
+                                    <input
+                                        type="password"
+                                        className="form-input"
+                                        value={registerData.password}
+                                        onChange={(e) => setRegisterData({...registerData, password: e.target.value})}
+                                        placeholder="Create a password (min 6 characters)"
+                                    />
+                                    {errors.password && <div className="error-message">{errors.password}</div>}
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label className="form-label">Weight (kg)</label>
+                                    <input
+                                        type="number"
+                                        className="form-input"
+                                        value={registerData.weight}
+                                        onChange={(e) => setRegisterData({...registerData, weight: e.target.value})}
+                                        placeholder="Enter your weight"
+                                    />
+                                    {errors.weight && <div className="error-message">{errors.weight}</div>}
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label className="form-label">Activity Level</label>
+                                    <select 
+                                        className="form-select"
+                                        value={registerData.activityLevel}
+                                        onChange={(e) => setRegisterData({...registerData, activityLevel: e.target.value})}
+                                    >
+                                        <option value="light">Light (mostly sedentary)</option>
+                                        <option value="moderate">Moderate (some exercise)</option>
+                                        <option value="active">Active (regular exercise)</option>
+                                        <option value="very-active">Very Active (intense daily exercise)</option>
+                                    </select>
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label className="form-label">Daily Water Intake Goal (ml)</label>
+                                    <input
+                                        type="number"
+                                        className="form-input"
+                                        value={registerData.dailyGoal}
+                                        onChange={(e) => setRegisterData({...registerData, dailyGoal: parseInt(e.target.value) || 2000})}
+                                        placeholder="Daily goal in milliliters"
+                                    />
+                                </div>
+                                
+                                <button type="submit" className="btn btn-primary btn-large" style={{width: '100%'}}>
+                                    Register <i className="fas fa-user-plus"></i>
+                                </button>
+                            </form>
+                            
+                            <div style={{textAlign: 'center', marginTop: '20px'}}>
+                                <p>Already have an account?</p>
+                                <button 
+                                    className="btn btn-secondary" 
+                                    onClick={() => setActiveTab('login')}
+                                    style={{marginTop: '10px'}}
+                                >
+                                    Switch to Login
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // Dashboard Component
+        const DashboardView = ({ username }) => {
+            const [userData, setUserData] = React.useState(null);
+            const [showReminder, setShowReminder] = React.useState(false);
+            const [glassAnimation, setGlassAnimation] = React.useState(false);
+
+            React.useEffect(() => {
+                // Load user data from localStorage
+                const data = JSON.parse(localStorage.getItem(`user_${username}`)) || {
+                    weight: 0,
+                    activityLevel: 'moderate',
+                    dailyGoal: 2000,
+                    logs: []
+                };
+                setUserData(data);
+
+                // Set up reminder interval (every 45 minutes)
+                const reminderInterval = setInterval(() => {
+                    setShowReminder(true);
+                    
+                    // Hide reminder after 10 seconds
+                    setTimeout(() => setShowReminder(false), 10000);
+                }, 45 * 60 * 1000);
+
+                return () => clearInterval(reminderInterval);
+            }, [username]);
+
+            const updateUserData = (newData) => {
+                setUserData(newData);
+                localStorage.setItem(`user_${username}`, JSON.stringify(newData));
+            };
+
+            const logGlassOfWater = () => {
+                if (!userData) return;
+                
+                setGlassAnimation(true);
+                setTimeout(() => setGlassAnimation(false), 1000);
+                
+                const today = new Date().toISOString().split('T')[0];
+                const now = new Date().toISOString();
+                
+                const updatedLogs = [...userData.logs];
+                const todayLogIndex = updatedLogs.findIndex(log => log.date === today);
+                
+                if (todayLogIndex >= 0) {
+                    updatedLogs[todayLogIndex].amount += 250;
+                    updatedLogs[todayLogIndex].timestamps.push(now);
+                } else {
+                    updatedLogs.push({
+                        date: today,
+                        amount: 250,
+                        timestamps: [now]
+                    });
+                }
+                
+                const updatedData = { ...userData, logs: updatedLogs };
+                updateUserData(updatedData);
+            };
+
+            const calculateRecommendedIntake = () => {
+                if (!userData || !userData.weight) return userData.dailyGoal || 2000;
+                
+                let base = userData.weight * 0.033 * 1000; // Convert to ml
+                
+                // Adjust for activity level
+                if (userData.activityLevel === 'light') base += 250;
+                if (userData.activityLevel === 'moderate') base += 500;
+                if (userData.activityLevel === 'active') base += 750;
+                if (userData.activityLevel === 'very-active') base += 1000;
+                
+                return Math.round(base);
+            };
+
+            const getTodaysIntake = () => {
+                if (!userData) return 0;
+                
+                const today = new Date().toISOString().split('T')[0];
+                const todayLog = userData.logs.find(log => log.date === today);
+                
+                return todayLog ? todayLog.amount : 0;
+            };
+
+            const getWeeklyIntake = () => {
+                if (!userData) return [];
+                
+                const today = new Date();
+                const weekDates = [];
+                
+                for (let i = 6; i >= 0; i--) {
+                    const date = new Date(today);
+                    date.setDate(today.getDate() - i);
+                    weekDates.push(date.toISOString().split('T')[0]);
+                }
+                
+                return weekDates.map(date => {
+                    const log = userData.logs.find(log => log.date === date);
+                    return log ? log.amount : 0;
+                });
+            };
+
+            const calculateStreak = () => {
+                if (!userData) return 0;
+                
+                const sortedLogs = [...userData.logs].sort((a, b) => new Date(b.date) - new Date(a.date));
+                let streak = 0;
+                let today = new Date();
+                
+                // Check if today's goal is met
+                const todayIntake = getTodaysIntake();
+                const recommended = calculateRecommendedIntake();
+                
+                if (todayIntake >= recommended) {
+                    streak++;
+                } else {
+                    return 0; // Streak ends if today isn't complete
+                }
+                
+                // Check previous days
+                for (let i = 0; i < sortedLogs.length; i++) {
+                    const logDate = new Date(sortedLogs[i].date);
+                    const daysDiff = Math.floor((today - logDate) / (1000 * 60 * 60 * 24));
+                    
+                    if (daysDiff === i + 1 && sortedLogs[i].amount >= recommended) {
+                        streak++;
+                    } else {
+                        break;
+                    }
+                }
+                
+                return streak;
+            };
+
+            if (!userData) {
+                return <div>Loading...</div>;
+            }
+
+            const todaysIntake = getTodaysIntake();
+            const recommendedIntake = calculateRecommendedIntake();
+            const weeklyIntake = getWeeklyIntake();
+            const streak = calculateStreak();
+            const progressPercentage = Math.min(100, (todaysIntake / recommendedIntake) * 100);
+
+            return (
+                <div>
+                    {showReminder && (
+                        <div className="reminder-popup">
+                            <i className="fas fa-bell" style={{color: '#F2C94C', fontSize: '24px'}}></i>
+                            <div>
+                                <h3>Time to hydrate!</h3>
+                                <p>It's been a while since your last drink. Stay hydrated!</p>
+                            </div>
+                            <button onClick={() => setShowReminder(false)}>Dismiss</button>
+                        </div>
+                    )}
+
+                    <div className="grid">
+                        <div className="card">
+                            <h3 className="card-title"><i className="fas fa-user"></i> User Profile</h3>
+                            <UserProfile 
+                                userData={userData} 
+                                onUpdate={updateUserData} 
+                                recommendedIntake={recommendedIntake}
+                            />
+                        </div>
+
+                        <div className="card">
+                            <h3 className="card-title"><i className="fas fa-bullseye"></i> Today's Goal</h3>
+                            <div style={{textAlign: 'center'}}>
+                                <div className="stat-number">{todaysIntake} / {recommendedIntake} ml</div>
+                                <div className="progress-container">
+                                    <div 
+                                        className="progress-bar" 
+                                        style={{width: `${progressPercentage}%`}}
+                                    >
+                                        {Math.round(progressPercentage)}%
+                                    </div>
+                                </div>
+                                <button 
+                                    className={`btn btn-primary btn-large ${glassAnimation ? 'glass-animation' : ''}`}
+                                    onClick={logGlassOfWater}
+                                    style={{marginTop: '15px'}}
+                                >
+                                    <i className="fas fa-glass-water"></i> Log a Glass (250ml)
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="card">
+                            <h3 className="card-title"><i className="fas fa-chart-line"></i> Weekly Progress</h3>
+                            <div className="chart-container">
+                                <WeeklyChart data={weeklyIntake} goal={recommendedIntake} />
+                            </div>
+                        </div>
+
+                        <div className="card">
+                            <h3 className="card-title"><i className="fas fa-award"></i> Achievements</h3>
+                            <div>
+                                {streak > 0 && (
+                                    <div>
+                                        <span className="badge badge-success">Current Streak</span>
+                                        <span className="streak-count">{streak} days</span>
+                                    </div>
+                                )}
+                                <div style={{marginTop: '15px'}}>
+                                    {todaysIntake >= recommendedIntake ? (
+                                        <span className="badge badge-primary">Today's Goal Achieved!</span>
+                                    ) : (
+                                        <span className="badge badge-warning">{recommendedIntake - todaysIntake}ml left today</span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="insight-card">
+                            <h3 className="card-title"><i className="fas fa-lightbulb"></i> Hydration Insight</h3>
+                            <Insights 
+                                todaysIntake={todaysIntake} 
+                                recommendedIntake={recommendedIntake} 
+                                userData={userData}
+                            />
+                        </div>
+
+                        <div className="card">
+                            <h3 className="card-title"><i className="fas fa-trophy"></i> Leaderboard</h3>
+                            <Leaderboard currentUser={username} />
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // User Profile Component
+        const UserProfile = ({ userData, onUpdate, recommendedIntake }) => {
+            const [weight, setWeight] = React.useState(userData.weight || '');
+            const [activityLevel, setActivityLevel] = React.useState(userData.activityLevel || 'moderate');
+
+            const handleSave = () => {
+                const updatedData = {
+                    ...userData,
+                    weight: parseInt(weight) || 0,
+                    activityLevel,
+                    dailyGoal: recommendedIntake
+                };
+                onUpdate(updatedData);
+            };
+
+            return (
+                <div>
+                    <div className="form-group">
+                        <label className="form-label">Weight (kg)</label>
+                        <input
+                            type="number"
+                            className="form-input"
+                            value={weight}
+                            onChange={(e) => setWeight(e.target.value)}
+                            placeholder="Enter your weight"
+                        />
+                    </div>
+                    
+                    <div className="form-group">
+                        <label className="form-label">Activity Level</label>
+                        <select 
+                            className="form-select"
+                            value={activityLevel}
+                            onChange={(e) => setActivityLevel(e.target.value)}
+                        >
+                            <option value="light">Light (mostly sedentary)</option>
+                            <option value="moderate">Moderate (some exercise)</option>
+                            <option value="active">Active (regular exercise)</option>
+                            <option value="very-active">Very Active (intense daily exercise)</option>
+                        </select>
+                    </div>
+                    
+                    <div className="form-group">
+                        <label className="form-label">Recommended Daily Intake</label>
+                        <div className="stat-number">{recommendedIntake} ml</div>
+                    </div>
+                    
+                    <button className="btn btn-primary" onClick={handleSave}>Save Changes</button>
+                </div>
+            );
+        };
+
+        // Weekly Chart Component
+        const WeeklyChart = ({ data, goal }) => {
+            const chartRef = React.useRef(null);
+            const chartInstance = React.useRef(null);
+
+            React.useEffect(() => {
+                if (chartRef.current) {
+                    const ctx = chartRef.current.getContext('2d');
+                    
+                    // Destroy previous chart if it exists
+                    if (chartInstance.current) {
+                        chartInstance.current.destroy();
+                    }
+                    
+                    // Get dates for the past week
+                    const dates = [];
+                    for (let i = 6; i >= 0; i--) {
+                        const date = new Date();
+                        date.setDate(date.getDate() - i);
+                        dates.push(date.toLocaleDateString('en-US', { weekday: 'short' }));
+                    }
+                    
+                    // Create new chart
+                    chartInstance.current = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: dates,
+                            datasets: [
+                                {
+                                    label: 'Water Intake (ml)',
+                                    data: data,
+                                    backgroundColor: '#2D9CDB',
+                                    borderColor: '#2D9CDB',
+                                    borderWidth: 1
+                                },
+                                {
+                                    label: 'Daily Goal',
+                                    data: Array(7).fill(goal),
+                                    type: 'line',
+                                    fill: false,
+                                    borderColor: '#F2C94C',
+                                    borderWidth: 2,
+                                    pointRadius: 0
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    title: {
+                                        display: true,
+                                        text: 'Milliliters (ml)'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                return () => {
+                    if (chartInstance.current) {
+                        chartInstance.current.destroy();
+                    }
+                };
+            }, [data, goal]);
+
+            return <canvas ref={chartRef}></canvas>;
+        };
+
+        // Insights Component
+        const Insights = ({ todaysIntake, recommendedIntake, userData }) => {
+            const difference = recommendedIntake - todaysIntake;
+            
+            let message = '';
+            if (todaysIntake >= recommendedIntake) {
+                message = "Great job! You've met your hydration goal for today.";
+            } else if (todaysIntake >= recommendedIntake * 0.7) {
+                message = `You're almost there! Just ${difference}ml more to reach your goal.`;
+            } else if (todaysIntake >= recommendedIntake * 0.4) {
+                message = `You've consumed ${todaysIntake}ml, but you need ${recommendedIntake}ml based on your profile.`;
+            } else {
+                message = `You've only had ${todaysIntake}ml. Your body needs ${recommendedIntake}ml to stay properly hydrated.`;
+            }
+            
+            // Predict tomorrow's intake based on past week average
+            const weeklyIntake = getWeeklyIntakeFromData(userData);
+            const averageIntake = weeklyIntake.length > 0 
+                ? Math.round(weeklyIntake.reduce((sum, val) => sum + val, 0) / weeklyIntake.length)
+                : 0;
+            
+            let prediction = '';
+            if (averageIntake > 0) {
+                if (averageIntake >= recommendedIntake * 0.9) {
+                    prediction = "Based on your history, you're likely to meet your goal tomorrow!";
+                } else {
+                    prediction = `Your average intake is ${averageIntake}ml. Try to reach ${recommendedIntake}ml tomorrow!`;
+                }
+            }
+            
+            return (
+                <div>
+                    <p>{message}</p>
+                    {prediction && <p style={{marginTop: '10px', fontStyle: 'italic'}}>{prediction}</p>}
+                </div>
+            );
+        };
+
+        // Helper function to get weekly intake from user data
+        const getWeeklyIntakeFromData = (userData) => {
+            if (!userData || !userData.logs) return [];
+            
+            const today = new Date();
+            const weekDates = [];
+            
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(today.getDate() - i);
+                weekDates.push(date.toISOString().split('T')[0]);
+            }
+            
+            return weekDates.map(date => {
+                const log = userData.logs.find(log => log.date === date);
+                return log ? log.amount : 0;
+            });
+        };
+
+        // Leaderboard Component
+        const Leaderboard = ({ currentUser }) => {
+            const [users, setUsers] = React.useState([]);
+            
+            React.useEffect(() => {
+                // Get all users from localStorage
+                const userList = JSON.parse(localStorage.getItem('hydrationUsers')) || [];
+                
+                // Calculate each user's average intake
+                const usersWithScores = userList.map(username => {
+                    const userData = JSON.parse(localStorage.getItem(`user_${username}`)) || { logs: [] };
+                    
+                    // Calculate average daily intake for the past week
+                    const weeklyIntake = getWeeklyIntakeFromData(userData);
+                    const averageIntake = weeklyIntake.length > 0 
+                        ? Math.round(weeklyIntake.reduce((sum, val) => sum + val, 0) / weeklyIntake.length)
+                        : 0;
+                    
+                    return {
+                        username,
+                        averageIntake
+                    };
+                });
+                
+                // Sort by average intake (descending)
+                usersWithScores.sort((a, b) => b.averageIntake - a.averageIntake);
+                
+                setUsers(usersWithScores);
+            }, []);
+            
+            return (
+                <div className="leaderboard">
+                    {users.map((user, index) => (
+                        <div 
+                            key={user.username} 
+                            className="leaderboard-item"
+                            style={user.username === currentUser ? {backgroundColor: '#e3f2fd', borderRadius: '8px'} : {}}
+                        >
+                            <div>
+                                <span className="leaderboard-rank">#{index + 1}</span>
+                                {user.username} {user.username === currentUser && '(You)'}
+                            </div>
+                            <div>{user.averageIntake} ml/day</div>
+                        </div>
+                    ))}
+                </div>
+            );
+        };
+
+        // Render the App
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
