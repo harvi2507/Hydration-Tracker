@@ -20,7 +20,7 @@ Features:
 Frontend: HTML, CSS, JavaScript
 
 Project Setup:
-git clone https://github.com/your-username/hydration-tracker.git 
+https://github.com/your-username/hydration-tracker.git 
 
 Why This Project?
 Most people forget to drink enough water. Hydration Tracker motivates users with personalized goals and easy tracking, making hydration effortless and fun.
